@@ -1,3 +1,4 @@
+current_dir = $(shell pwd)
 LIBS := $(shell mysql_config --cflags)
 FLAGS := $(shell mysql_config --libs)
 WARN_FLAGS := -Wunused-command-line-argument
@@ -15,9 +16,13 @@ OBJECTS = $(SOURCES:.c=.o)
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) -v -o $(TARGET) $(OBJECTS)
 
-all: $(TARGET)
+my.cnf:
+	@sed -i '' -e 's|#current_dir#|$(current_dir)|g' my.cnf
+
+all: $(TARGET) my.cnf
 
 clean:
+	# @git chechout -- my.cnf
 	@rm -fv $(OBJECTS) $(TARGET) *.so *.o
 
-.PHONY : clean all
+.PHONY : clean all my.cnf
