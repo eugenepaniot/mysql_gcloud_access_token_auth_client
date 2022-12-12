@@ -22,6 +22,7 @@ my.cnf:
 all: $(TARGET) my.cnf install
 
 install:
+	@touch ~/.my.cnf
 	@grep -q $(current_dir) ~/.my.cnf || sed -i '.bak' '1s|^|!include $(current_dir)/my.cnf\n|g' ~/.my.cnf
 
 clean:
