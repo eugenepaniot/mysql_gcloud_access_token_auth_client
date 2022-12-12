@@ -1,7 +1,13 @@
 ## Requirements
 
 ```
-brew install mysql-client
+brew install mysql-client@8.0
+```
+
+## Build & Install
+
+```
+make all
 ```
 
 ## Assumptions

@@ -19,10 +19,13 @@ $(TARGET): $(OBJECTS)
 my.cnf:
 	@sed -i '' -e 's|#current_dir#|$(current_dir)|g' my.cnf
 
-all: $(TARGET) my.cnf
+all: $(TARGET) my.cnf install
+
+install:
+	@grep -q $(current_dir) ~/.my.cnf || sed -i '.bak' '1s|^|!include $(current_dir)/my.cnf\n|g' ~/.my.cnf
 
 clean:
-	# @git chechout -- my.cnf
+	@git chechout -- my.cnf
 	@rm -fv $(OBJECTS) $(TARGET) *.so *.o
 
 .PHONY : clean all my.cnf

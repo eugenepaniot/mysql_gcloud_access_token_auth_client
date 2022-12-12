@@ -24,12 +24,13 @@ static int gcloud_access_token_auth_client_handler(MYSQL_PLUGIN_VIO *vio, MYSQL 
 
   if (!vio || !mysql) {
     gcloud_access_token_auth_log_error("Bug?");
-    return CR_ERROR;
+    return CR_AUTH_PLUGIN_ERROR;
   }
 
   if (mysql->passwd[0]) {
     gcloud_access_token_auth_log("Password provided using it");
-    return vio->write_packet(vio, (const unsigned char *) mysql->passwd, (int)strlen(mysql->passwd) ) ? CR_ERROR : CR_OK;
+    return vio->write_packet(vio, (const unsigned char *) mysql->passwd, (int)strlen(mysql->passwd)) ? 
+            CR_ERROR : CR_OK;
   }
 
   FILE *gcloud;
@@ -37,20 +38,21 @@ static int gcloud_access_token_auth_client_handler(MYSQL_PLUGIN_VIO *vio, MYSQL 
   size_t nread;
   static char *cmd = "gcloud auth print-access-token 2>&1";
 
-	gcloud = popen(cmd, "r");
-	if (gcloud) {
-    nread = fread(buf, sizeof(buf), 1, gcloud);
+  gcloud = popen(cmd, "r");
+  if (gcloud) {
+    nread = fread(buf, 1, sizeof(buf), gcloud);
   }
 
-  gcloud_access_token_auth_log("Got access token: %s (%d)", buf, strlen(buf));
+  gcloud_access_token_auth_log("Got access token: %s (%d/%d)", buf, strlen(buf), nread);
 
-  mysql->passwd = strdup(buf);
-  if (!mysql->passwd) {
-    gcloud_access_token_auth_log_error("Cannt allocate mysql->passwd");
-    return CR_AUTH_PLUGIN_ERROR;
+  mysql->passwd = (char *)malloc(nread);
+  if (mysql->passwd == NULL) {
+      gcloud_access_token_auth_log_error("Cannt allocate mysql->passwd");
+      return CR_AUTH_PLUGIN_ERROR;
   }
-  
-  int res = vio->write_packet(vio, (const unsigned char *) buf, (int)strlen(buf) );
+  memcpy(mysql->passwd, buf, nread);
+
+  int res = vio->write_packet(vio, (const unsigned char *) mysql->passwd, (int)strlen(mysql->passwd));
   if(res) { 
     gcloud_access_token_auth_log_error("write_packet error: %d", res);
     return CR_ERROR;
